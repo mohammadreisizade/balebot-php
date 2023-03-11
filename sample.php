@@ -2,7 +2,7 @@
 include "BaleAPIv2.php";
 include "jdf.php";
 
-$token="804113617:F6iDCkhZIWXnGbjkFIPVVz3JgtDS6BmpB6FFU5Al";
+$token="1857753907:8IBpKjptKt8cserRbRgUC6u7x5BgXB1mqKxH8KHN";
 
 // Set session variables
 
