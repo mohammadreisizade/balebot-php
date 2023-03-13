@@ -53,11 +53,18 @@ $q = "SELECT username FROM Persons";
       }
     }
   }  
-}
-else{
+}else{
+  $q = "SELECT unique_id FROM Persons";
+  if ($result = $conn->query($q)) {
+    while ($row = $result->fetch_assoc()) {
+          $data[] = $row['unique_id'];
+      }
+  }
+  if (!in_array($user_id, $data)){
     $contenttmp = array('chat_id' => $chat_id,"text"=>"آیدی شما در ربات تعریف نشده است!");
     $bot->sendText($contenttmp);
-  }
+  } 
+}
 
 
 
@@ -176,11 +183,18 @@ if (in_array($chat_id, $accc)){
         $result = $conn->query($q_up); 
       }
     }
-    $sql = "SELECT * FROM Persons WHERE status='choosing' OR status='getname' OR status='getuser' OR status='getpos' OR status='change'";
+    $sql = "SELECT * FROM Persons WHERE status='changeuss'";
+    if ($result = $conn->query($sql)){
+      if($result->num_rows!=0){
+        $q_up = "UPDATE Persons SET status=NULL WHERE status='changeuss'";
+        $result = $conn->query($q_up); 
+      }
+    }
+    $sql = "SELECT * FROM Persons WHERE status='choosing' OR status='getname' OR status='getuser' OR status='getpos' OR status='change' OR status='changeus'";
     if ($result = $conn->query($sql)) {
       if($result->num_rows!=0){
         $row = $result->fetch_assoc();
-        $sql = "DELETE FROM Persons WHERE status='choosing' OR status='getname' OR status='getuser' OR status='getpos' OR status='change'";
+        $sql = "DELETE FROM Persons WHERE status='choosing' OR status='getname' OR status='getuser' OR status='getpos' OR status='change' OR status='changeus'";
         $result = $conn->query($sql);
       }
     }
@@ -304,7 +318,7 @@ if (in_array($chat_id, $accc)){
         }
       }
     }
-      $q_id = "SELECT * FROM Persons WHERE status='getname' OR status='getuser' OR status='change'";
+      $q_id = "SELECT * FROM Persons WHERE status='getname' OR status='getuser' OR status='change' OR status='changeus' OR status='changeuss'";
       if ($result = $conn->query($q_id)) {
         if($result->num_rows!=0){
           $row = $result->fetch_assoc();
@@ -383,13 +397,51 @@ if (in_array($chat_id, $accc)){
                 $bot->sendText($contenttmp); 
               }
             }
+          }elseif($row['status']=='changeus'){
+            $sql = "SELECT * FROM Persons WHERE username='$Text_orgi'";
+            if ($res = $conn->query($sql)){
+              if($res->num_rows==0){
+                $d_q = "DELETE FROM Persons WHERE status='changeus'";
+                $result = $conn->query($d_q);
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"این یوزرنیم در این ربات تعریف نشده است!");
+                $bot->sendText($contenttmp);
+                $inlineKeyboardoption =	[
+                  $bot->buildInlineKeyBoardButton("ثبت درخواست", '',"newreqacc"),
+                  $bot->buildInlineKeyBoardButton("درخواست های باز", '',"openreqacc"),
+                  $bot->buildInlineKeyBoardButton("درخواست های هر پروژه", '',"everything"),
+                  $bot->buildInlineKeyBoardButton("تنظیمات", '',"setting"),
+                ];
+                $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' =>$Keyboard);
+                $bot->sendText($contenttmp);
+                  
+              }else{
+                $q_up = "UPDATE Persons SET status='changeuss' WHERE username='$Text_orgi'";
+                $result = $conn->query($q_up);
+                $sql = "SELECT * FROM Persons WHERE status='changeus'";
+                if ($result = $conn->query($sql)){
+                  if($result->num_rows!=0){
+                    $d_q = "DELETE FROM Persons WHERE status='changeus'";
+                    $result = $conn->query($d_q);
+                  }
+                }
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم جدید را بدون علامت @ وارد کنید:");
+                $bot->sendText($contenttmp); 
+              }
+            }
+          }elseif($row['status']=='changeuss'){
+
+            $q_up = "UPDATE Persons SET username='$Text_orgi' WHERE status='changeuss'";
+            $result = $conn->query($q_up);
+            $q_up = "UPDATE Persons SET status=NULL WHERE status='changeuss'";
+            $result = $conn->query($q_up);
+            $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم ثبت شده شخص مورد نظر با موفقیت تغییر داده شد.");
+            $bot->sendText($contenttmp);
+            }
           }
         }
       }
     }
-  }
-
-
 // برای کنترل پروژه
 // -------------------------------------------------------------QUERY FOR CONTROL PROJECT------------------------------------------------------------------------
 
@@ -1107,6 +1159,8 @@ switch ($callback_data) {
       $inlineKeyboardoption =	[
         $bot->buildInlineKeyBoardButton("افزودن سمت", '',"newpost"),
         $bot->buildInlineKeyBoardButton("تغییر سمت", '',"changepost"),
+        $bot->buildInlineKeyBoardButton("تغییر یوزرنیم", '',"changeusername"),
+
       ];
       $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
       $contenttmp = array('chat_id' => $chat_id,"text"=>"یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' =>$Keyboard);
@@ -1115,10 +1169,10 @@ switch ($callback_data) {
   break;
   case "newpost":
     if (in_array($chat_id, $accc)){
-      $sql = "SELECT * FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname'";
+      $sql = "SELECT * FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname' OR status='changeus'";
       if ($result = $conn->query($sql)){
         if($result->num_rows!=0){
-          $d_q = "DELETE FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname'";
+          $d_q = "DELETE FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname' OR status='changeus'";
           $result = $conn->query($d_q);
         }
       }
@@ -1130,10 +1184,10 @@ switch ($callback_data) {
   break;
   case "changepost":
     if (in_array($chat_id, $accc)){
-      $sql = "SELECT * FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname'";
+      $sql = "SELECT * FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname' OR status='changeus'";
       if ($result = $conn->query($sql)){
         if($result->num_rows!=0){
-          $d_q = "DELETE FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname'";
+          $d_q = "DELETE FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname' OR status='changeus'";
           $result = $conn->query($d_q);
         }
       }
@@ -1143,11 +1197,49 @@ switch ($callback_data) {
       if($result->num_rows!=0){
         $q_up = "UPDATE Requests SET status=NULL WHERE status='changing'";
         $result = $conn->query($q_up); 
+        }
       }
-    }
+      $sql = "SELECT * FROM Persons WHERE status='changeuss'";
+      if ($result = $conn->query($sql)){
+        if($result->num_rows!=0){
+          $q_up = "UPDATE Persons SET status=NULL WHERE status='changeuss'";
+          $result = $conn->query($q_up); 
+      }
+      }
       $qu = "INSERT INTO Persons (status) VALUES ('change')";
       $result = $conn->query($qu);
       $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید:");
+      $bot->sendText($contenttmp);
+
+    }
+  break;
+  case "changeusername":
+    if (in_array($chat_id, $accc)){
+      $sql = "SELECT * FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname' OR status='changeus'";
+      if ($result = $conn->query($sql)){
+        if($result->num_rows!=0){
+          $d_q = "DELETE FROM Persons WHERE status='change' OR status='getpos' OR status='getuser' OR status='getname' OR status='changeus'";
+          $result = $conn->query($d_q);
+        }
+      }
+
+      $sql = "SELECT * FROM Persons WHERE status='changing'";
+      if ($result = $conn->query($sql)){
+      if($result->num_rows!=0){
+        $q_up = "UPDATE Requests SET status=NULL WHERE status='changing'";
+        $result = $conn->query($q_up); 
+        }
+      }
+      $sql = "SELECT * FROM Persons WHERE status='changeuss'";
+      if ($result = $conn->query($sql)){
+        if($result->num_rows!=0){
+          $q_up = "UPDATE Persons SET status=NULL WHERE status='changeuss'";
+          $result = $conn->query($q_up); 
+        }
+      }
+      $qu = "INSERT INTO Persons (status) VALUES ('changeus')";
+      $result = $conn->query($qu);
+      $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم قبلی شخص مورد نظر را بدون علامت @ وارد کنید:");
       $bot->sendText($contenttmp);
 
     }
