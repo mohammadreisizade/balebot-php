@@ -314,10 +314,10 @@ if (in_array($chat_id, $accc)){
             $q_st = "UPDATE Requests SET req_status='getdesc' WHERE created_by=$bb AND req_status='getprice'";
             $r = $conn->query($q_st);
             if($row['contract_type'] == 'factor'){
-              $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(شماره شبا و نام طرف حساب):");
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(شماره شبا و نام طرف حساب)_حداکثر 300 کاراکتر:");
               $bot->sendText($contenttmp);
             }else{
-              $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(صورت وضعیت، علی الحساب، پیش پرداخت، سپرده های قرارداد):");
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(صورت وضعیت، علی الحساب، پیش پرداخت، سپرده های قرارداد)_حداکثر 300 کاراکتر:");
               $bot->sendText($contenttmp);
             }
           }
@@ -332,7 +332,7 @@ if (in_array($chat_id, $accc)){
             if($row['contract_type'] == 'factor'){
               $q_st = "UPDATE Requests SET req_status='getproj' WHERE created_by=$bb AND req_status='getdesc'";
               $r = $conn->query($q_st);
-              $contenttmp = array('chat_id' => $chat_id,"text"=>"پروژه:");
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"پروژه_حداکثر 100 کاراکتر:");
               $bot->sendText($contenttmp);
             }else{
               $all = "SELECT * FROM Requests WHERE created_by=$bb AND is_closed=2";
@@ -406,7 +406,7 @@ if (in_array($chat_id, $accc)){
               $result = $conn->query($q_up);
               $q_up = "UPDATE Persons SET status='getuser' WHERE status='getname'";
               $result = $conn->query($q_up);
-              $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید:");
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید_حداکثر 30 کاراکتر:");
               $bot->sendText($contenttmp);
             }
           }elseif($row['status']=='getuser'){
@@ -509,23 +509,27 @@ if (in_array($chat_id, $accc)){
                     $result = $conn->query($d_q);
                   }
                 }
-                $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم جدید را بدون علامت @ وارد کنید:");
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم جدید را بدون علامت @ وارد کنید_حداکثر 30 کاراکتر:");
                 $bot->sendText($contenttmp); 
               }
             }
           }elseif($row['status']=='changeuss'){
-
-            $q_up = "UPDATE Persons SET username='$Text_orgi' WHERE status='changeuss'";
-            $result = $conn->query($q_up);
-            $q_up = "UPDATE Persons SET status=NULL WHERE status='changeuss'";
-            $result = $conn->query($q_up);
-            $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم ثبت شده شخص مورد نظر با موفقیت تغییر داده شد.");
-            $bot->sendText($contenttmp);
+            if(strlen($Text_orgi)>=30){
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"تعداد کاراکتر ها بیش از حد مجاز است، متن کوتاه تری را وارد کنید:");
+              $bot->sendText($contenttmp);
+            }else{
+              $q_up = "UPDATE Persons SET username='$Text_orgi' WHERE status='changeuss'";
+              $result = $conn->query($q_up);
+              $q_up = "UPDATE Persons SET status=NULL WHERE status='changeuss'";
+              $result = $conn->query($q_up);
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم ثبت شده شخص مورد نظر با موفقیت تغییر داده شد.");
+              $bot->sendText($contenttmp);
             }
           }
         }
       }
     }
+  }
 // برای کنترل پروژه
 // -------------------------------------------------------------QUERY FOR CONTROL PROJECT------------------------------------------------------------------------
 
@@ -614,7 +618,7 @@ if (in_array($chat_id, $project_managers)){
               $result = $conn->query($q_up);
               $q_st = "UPDATE Requests SET req_status='getprice' WHERE created_by=$bb AND req_status='gettitle'";
               $r = $conn->query($q_st);
-              $contenttmp = array('chat_id' => $chat_id,"text"=>"مبلغ را وارد کنید:");
+              $contenttmp = array('chat_id' => $chat_id,"text"=>"مبلغ را وارد کنید_حداکثر 30 رقم:");
               $bot->sendText($contenttmp);
             }
           }elseif($ccc == "getprice"){
@@ -627,10 +631,10 @@ if (in_array($chat_id, $project_managers)){
               $q_st = "UPDATE Requests SET req_status='getdesc' WHERE created_by=$bb AND req_status='getprice'";
               $r = $conn->query($q_st);
               if($row['contract_type'] == 'factor'){
-                $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(شماره شبا و نام طرف حساب):");
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(شماره شبا و نام طرف حساب)_حداکثر 300 کاراکتر:");
                 $bot->sendText($contenttmp);
               }else{
-                $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(صورت وضعیت، علی الحساب، پیش پرداخت، سپرده های قرارداد):");
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"توضیحات(صورت وضعیت، علی الحساب، پیش پرداخت، سپرده های قرارداد)_حداکثر 300 کاراکتر:");
                 $bot->sendText($contenttmp);
               }
             }
@@ -645,7 +649,7 @@ if (in_array($chat_id, $project_managers)){
               if($row['contract_type'] == 'factor'){
                 $q_st = "UPDATE Requests SET req_status='getproj' WHERE created_by=$bb AND req_status='getdesc'";
                 $r = $conn->query($q_st);
-                $contenttmp = array('chat_id' => $chat_id,"text"=>"پروژه:");
+                $contenttmp = array('chat_id' => $chat_id,"text"=>"پروژه_حداکثر 100 کاراکتر:");
                 $bot->sendText($contenttmp);
               }else{
                 $all = "SELECT * FROM Requests WHERE created_by=$bb AND is_closed=2";
@@ -858,7 +862,7 @@ switch ($callback_data) {
       $r = $conn->query($q_st);
 
       
-      $content=array("chat_id" =>$chat_id,"text" =>"شماره قرارداد را وارد کنید:");
+      $content=array("chat_id" =>$chat_id,"text" =>"شماره قرارداد را وارد کنید_حداکثر 200 کاراکتر:");
       $bot->sendText($content);
     }
     break;
@@ -878,7 +882,7 @@ switch ($callback_data) {
       $r = $conn->query($q_st);
 
       
-      $content=array("chat_id" =>$chat_id,"text" =>"عنوان را وارد کنید:");
+      $content=array("chat_id" =>$chat_id,"text" =>"عنوان را وارد کنید_حداکثر 200 کاراکتر:");
       $bot->sendText($content);
     }
     break;
@@ -1362,7 +1366,7 @@ switch ($callback_data) {
       }
       $qu = "INSERT INTO Persons (status) VALUES ('change')";
       $result = $conn->query($qu);
-      $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید:");
+      $contenttmp = array('chat_id' => $chat_id,"text"=>"یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید_حداکثر 30 کاراکتر:");
       $bot->sendText($contenttmp);
 
     }
