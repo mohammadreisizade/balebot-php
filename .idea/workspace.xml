@@ -5,12 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a9b692af-1e47-46d5-b130-2af49f1c0f61" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/balebot-php-main.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/balebot-php-main.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sample.php" beforeDir="false" afterPath="$PROJECT_DIR$/sample.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,7 +54,8 @@
       <workItem from="1690110979076" duration="67000" />
       <workItem from="1690193392689" duration="15092000" />
       <workItem from="1690222341490" duration="2237000" />
-      <workItem from="1690263214817" duration="27198000" />
+      <workItem from="1690263214817" duration="27416000" />
+      <workItem from="1690312840358" duration="3567000" />
     </task>
     <servers />
   </component>
