@@ -2,10 +2,14 @@
 include "BaleAPIv2.php";
 include "jdf.php";
 
+//require 'vendor/autoload.php';
+require_once 'Classes/PHPExcel.php';
+
+//use PhpOffice\PhpSpreadsheet\Spreadsheet;
+//use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 // -------------------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------- FUNCTIONS -----------------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------
-
 // کنسل کردن تغییر سمت
 function stop_changing($conn)
 {
@@ -118,6 +122,274 @@ function admin_clipboard($bot, $chat_id)
     $bot->sendText($contenttmp);
 }
 
+function export_excel_all($conn, $bot, $chat_id){
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 1 OR is_closed = 0 ORDER BY date_registered DESC, time_registered DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    $objPHPExcel = new PHPExcel();
+    $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+
+
+// اضافه کردن عنوان‌ها به اکسل
+    $sheet->setCellValue('A1', 'نام');
+    $sheet->setCellValue('B1', 'عنوان');
+    $sheet->setCellValue('C1', 'توضیحات');
+    $sheet->setCellValue('D1', 'نوع قرارداد');
+    $sheet->setCellValue('E1', 'وضعیت');
+    $sheet->setCellValue('F1', 'مبلغ');
+    $sheet->setCellValue('G1', 'پروژه');
+    $sheet->setCellValue('H1', 'تاریخ ثبت درخواست');
+    $sheet->setCellValue('I1', 'ساعت ثبت درخواست');
+    $sheet->setCellValue('J1', 'تاریخ تغییر وضعیت به کارتابل');
+    $sheet->setCellValue('K1', 'ساعت تغییر وضعیت به کارتابل');
+    $sheet->setCellValue('L1', 'تاریخ تغییر وضعیت به پرداخت شده');
+    $sheet->setCellValue('M1', 'ساعت تغییر وضعیت به پرداخت شده');
+    $sheet->setCellValue('N1', 'دلیل رد درخواست');
+    $sheet->setCellValue('O1', 'تاریخ رد درخواست');
+    $sheet->setCellValue('P1', 'ساعت رد درخواست');
+
+
+    if ($result->num_rows != 0) {
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            if ($row['contract_type']=="contract"){
+                $contract_type = "قراردادی";
+            }else{
+                $contract_type = "فاکتوری";
+            }
+
+            if ($row['req_status']=="paid"){
+                $req_status = "پرداخت شده";
+            }elseif ($row['req_status']=="cartable"){
+                $req_status = "کارتابل";
+            }elseif ($row['req_status']=="rejectacc"){
+                $req_status = "رد شده توسط امور مالی";
+            }elseif ($row['req_status']=="waitacc"){
+                $req_status = "در انتظار بررسی";
+            }else{
+                $req_status = "---";
+            }
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $project = $row['project'];
+            if ($row['project']==""){
+                $project = "---";
+            }
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description);
+            $sheet->setCellValue('D' . $rowNumber, $contract_type);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['price']);
+            $sheet->setCellValue('G' . $rowNumber, $project);
+            $sheet->setCellValue('H' . $rowNumber, $row['date_registered']);
+            $sheet->setCellValue('I' . $rowNumber, $row['time_registered']);
+            $sheet->setCellValue('J' . $rowNumber, $row['date_cartable']?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['time_cartable']?? "---");
+            $sheet->setCellValue('L' . $rowNumber, $row['date_paid']?? "---");
+            $sheet->setCellValue('M' . $rowNumber, $row['time_paid']?? "---");
+            $sheet->setCellValue('N' . $rowNumber, $row['reason']?? "---");
+            $sheet->setCellValue('O' . $rowNumber, $row['date_reject']?? "---");
+            $sheet->setCellValue('P' . $rowNumber, $row['time_reject']?? "---");
+            $rowNumber++;
+        }
+    } else {
+         $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+         $bot->sendText($content);
+    }
+    $objPHPExcel->getActiveSheet()->setTitle('Simple');
+    $objPHPExcel->setActiveSheetIndex(0);
+    $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+    $temp_path = 'public_html/reports_all_'.$temp_name.'.xlsx';
+    $objWriter->save($temp_path);
+    $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/'.$temp_path);
+    $bot->sendDocument($contentdoc);
+    unlink($temp_path);
+}
+
+function export_excel_open($conn, $bot, $chat_id){
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 0 AND (req_status = 'waitacc' OR req_status = 'cartable') ORDER BY date_registered DESC, time_registered DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    $objPHPExcel = new PHPExcel();
+    $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+
+
+// اضافه کردن عنوان‌ها به اکسل
+    $sheet->setCellValue('A1', 'نام');
+    $sheet->setCellValue('B1', 'عنوان');
+    $sheet->setCellValue('C1', 'توضیحات');
+    $sheet->setCellValue('D1', 'نوع قرارداد');
+    $sheet->setCellValue('E1', 'وضعیت');
+    $sheet->setCellValue('F1', 'مبلغ');
+    $sheet->setCellValue('G1', 'پروژه');
+    $sheet->setCellValue('H1', 'تاریخ ثبت درخواست');
+    $sheet->setCellValue('I1', 'ساعت ثبت درخواست');
+    $sheet->setCellValue('J1', 'تاریخ تغییر وضعیت به کارتابل');
+    $sheet->setCellValue('K1', 'ساعت تغییر وضعیت به کارتابل');
+
+
+
+    if ($result->num_rows != 0) {
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            if ($row['contract_type']=="contract"){
+                $contract_type = "قراردادی";
+            }else{
+                $contract_type = "فاکتوری";
+            }
+
+            if ($row['req_status']=="paid"){
+                $req_status = "پرداخت شده";
+            }elseif ($row['req_status']=="cartable"){
+                $req_status = "کارتابل";
+            }elseif ($row['req_status']=="rejectacc"){
+                $req_status = "رد شده توسط امور مالی";
+            }elseif ($row['req_status']=="waitacc"){
+                $req_status = "در انتظار بررسی";
+            }else{
+                $req_status = "---";
+            }
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $project = $row['project'];
+            if ($row['project']==""){
+                $project = "---";
+            }
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description);
+            $sheet->setCellValue('D' . $rowNumber, $contract_type);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['price']);
+            $sheet->setCellValue('G' . $rowNumber, $project);
+            $sheet->setCellValue('H' . $rowNumber, $row['date_registered']);
+            $sheet->setCellValue('I' . $rowNumber, $row['time_registered']);
+            $sheet->setCellValue('J' . $rowNumber, $row['date_cartable']?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['time_cartable']?? "---");
+
+            $rowNumber++;
+        }
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+    $objPHPExcel->getActiveSheet()->setTitle('Simple');
+    $objPHPExcel->setActiveSheetIndex(0);
+    $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+    $temp_path = 'public_html/reports_open_'.$temp_name.'.xlsx';
+    $objWriter->save($temp_path);
+    $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/'.$temp_path);
+    $bot->sendDocument($contentdoc);
+    unlink($temp_path);
+}
+
+function export_excel_paid($conn, $bot, $chat_id){
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 1 ORDER BY date_registered DESC, time_registered DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    $objPHPExcel = new PHPExcel();
+    $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+
+
+// اضافه کردن عنوان‌ها به اکسل
+    $sheet->setCellValue('A1', 'نام');
+    $sheet->setCellValue('B1', 'عنوان');
+    $sheet->setCellValue('C1', 'توضیحات');
+    $sheet->setCellValue('D1', 'نوع قرارداد');
+    $sheet->setCellValue('E1', 'وضعیت');
+    $sheet->setCellValue('F1', 'مبلغ');
+    $sheet->setCellValue('G1', 'پروژه');
+    $sheet->setCellValue('H1', 'تاریخ ثبت درخواست');
+    $sheet->setCellValue('I1', 'ساعت ثبت درخواست');
+    $sheet->setCellValue('J1', 'تاریخ تغییر وضعیت به کارتابل');
+    $sheet->setCellValue('K1', 'ساعت تغییر وضعیت به کارتابل');
+    $sheet->setCellValue('L1', 'تاریخ تغییر وضعیت به پرداخت شده');
+    $sheet->setCellValue('M1', 'ساعت تغییر وضعیت به پرداخت شده');
+
+
+
+    if ($result->num_rows != 0) {
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            if ($row['contract_type']=="contract"){
+                $contract_type = "قراردادی";
+            }else{
+                $contract_type = "فاکتوری";
+            }
+
+            if ($row['req_status']=="paid"){
+                $req_status = "پرداخت شده";
+            }elseif ($row['req_status']=="cartable"){
+                $req_status = "کارتابل";
+            }elseif ($row['req_status']=="rejectacc"){
+                $req_status = "رد شده توسط امور مالی";
+            }elseif ($row['req_status']=="waitacc"){
+                $req_status = "در انتظار بررسی";
+            }else{
+                $req_status = "---";
+            }
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $project = $row['project'];
+            if ($row['project']==""){
+                $project = "---";
+            }
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description);
+            $sheet->setCellValue('D' . $rowNumber, $contract_type);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['price']);
+            $sheet->setCellValue('G' . $rowNumber, $project);
+            $sheet->setCellValue('H' . $rowNumber, $row['date_registered']);
+            $sheet->setCellValue('I' . $rowNumber, $row['time_registered']);
+            $sheet->setCellValue('J' . $rowNumber, $row['date_cartable']?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['time_cartable']?? "---");
+            $sheet->setCellValue('L' . $rowNumber, $row['date_paid']?? "---");
+            $sheet->setCellValue('M' . $rowNumber, $row['time_paid']?? "---");
+
+            $rowNumber++;
+        }
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+    $objPHPExcel->getActiveSheet()->setTitle('Simple');
+    $objPHPExcel->setActiveSheetIndex(0);
+    $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+    $temp_path = 'public_html/reports_paid_'.$temp_name.'.xlsx';
+    $objWriter->save($temp_path);
+    $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/'.$temp_path);
+    $bot->sendDocument($contentdoc);
+    unlink($temp_path);
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------------
 
 $token = "1324268863:os1PBUvvHX7EVJOfYR3OHC9mH9gLzsaSLRfmxbDW";
@@ -182,6 +454,7 @@ $conn = new mysqli($servername, $usern, $password, "balebtir_bale_test");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+mysqli_set_charset($conn, "utf8mb4");
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------UPDATE UNIQUE ID INSTEAD OF USERNAME----------------------------------------------------------
@@ -1776,8 +2049,50 @@ switch ($callback_data) {
         if ($chat_id == $admin) {
             delete_half_made_user($conn);
             stop_changing($conn);
+            $inlineKeyboardoption = [
+                $bot->buildInlineKeyBoardButton("پرداخت شده ها", '', "adminexcelpaid"),
+                $bot->buildInlineKeyBoardButton("درخواست های باز", '', "adminexcelopen"),
+                $bot->buildInlineKeyBoardButton("تمام درخواست ها", '', "adminexcelall"),
+            ];
+            $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
+            $contenttmp = array('chat_id' => $chat_id, "text" => "گزارش مورد نظر خود را انتخاب کنید(1000 مورد آخر خروجی گرفته میشود):", 'reply_markup' => $Keyboard);
+            $bot->sendText($contenttmp);
+        }
+        break;
+
+    case "adminexcelopen":
+        if ($chat_id == $admin) {
+            delete_half_made_user($conn);
+            stop_changing($conn);
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             $bot->sendText($contenttmp);
+            export_excel_open($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
+        }
+        break;
+
+    case "adminexcelpaid":
+        if ($chat_id == $admin) {
+            delete_half_made_user($conn);
+            stop_changing($conn);
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_paid($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
+        }
+        break;
+
+    case "adminexcelall":
+        if ($chat_id == $admin) {
+            delete_half_made_user($conn);
+            stop_changing($conn);
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_all($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
         }
         break;
 }

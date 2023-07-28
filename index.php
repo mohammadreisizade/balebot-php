@@ -54,15 +54,17 @@ foreach ($data as $u) {
                 $description = $row['description'];
                 $price = $row['price'];
                 $date = $row['date_registered'];
+                $time = $row['time_registered'];
                 $contract_type = $row['contract_type'];
-
-                if($contract_type=='project'){
+                $date_cartable = $row['date_cartable'];
+                $time_cartable = $row['time_cartable'];
+                $status = "کارتابل";
+                if ($contract_type == 'factor') {
                     $project = $row['project'];
-                    $content=array("chat_id" =>$u,"text" =>"وضعیت : کارتابل\nنام : $name\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price\nتاریخ درخواست : $date");
-                    $bot->sendText($content);
+                    $content = array("chat_id" => $chat_id, "text" => "نام : $name\nوضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                } else {
+                    $content = array("chat_id" => $chat_id, "text" => "نام : $name\nوضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
                 }
-                $content=array("chat_id" =>$u,"text" =>"وضعیت : کارتابل\nنام : $name\nعنوان : $title\nتوضیحات : $description\nمبلغ : $price\nتاریخ درخواست : $date");
-                $bot->sendText($content);
                 sleep(2);
             }
             $contenttmp = array('chat_id' => $u,"text"=>"پایان پردازش.");
