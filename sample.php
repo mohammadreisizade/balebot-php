@@ -392,7 +392,7 @@ function export_excel_paid($conn, $bot, $chat_id){
 
 // ---------------------------------------------------------------------------------------------------------------------------
 
-$token = "1324268863:os1PBUvvHX7EVJOfYR3OHC9mH9gLzsaSLRfmxbDW";
+$token = "621029901:jTnqofwUsMtF5wKAB9MQHeyJgCtY863VfsVMXd8q";
 
 // Set session variables
 
@@ -449,7 +449,7 @@ $servername = "localhost";
 $usern = "balebtir_dev";
 $password = "1P,2Hs!xan).";
 // Create connection
-$conn = new mysqli($servername, $usern, $password, "balebtir_bale_test");
+$conn = new mysqli($servername, $usern, $password, "balebtir_bale_pro");
 // Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);

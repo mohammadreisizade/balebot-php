@@ -2,7 +2,7 @@
 include "BaleAPIv2.php";
 include "jdf.php";
 
-$token="804113617:F6iDCkhZIWXnGbjkFIPVVz3JgtDS6BmpB6FFU5Al";
+$token="621029901:jTnqofwUsMtF5wKAB9MQHeyJgCtY863VfsVMXd8q";
 
 // Set session variables
 
@@ -24,7 +24,7 @@ $servername = "localhost";
 $usern = "balebtir_dev";
 $password = "1P,2Hs!xan).";
 // Create connection
-$conn = new mysqli($servername, $usern, $password, "balebtir_balebot");
+$conn = new mysqli($servername, $usern, $password, "balebtir_bale_pro");
 // Check connection
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
