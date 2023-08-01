@@ -29,10 +29,11 @@ $conn = new mysqli($servername, $usern, $password, "balebtir_bale_pro");
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
+mysqli_set_charset($conn, "utf8mb4");
 
 
 
-$sql  = "SELECT unique_id FROM Persons WHERE position='CEO'";
+$sql  = "SELECT unique_id FROM Persons WHERE position='CEO' OR position='admin'";
 if ($result = $conn->query($sql)) {
     if($result->num_rows!=0){
         while($row = $result->fetch_assoc()) {
@@ -61,10 +62,11 @@ foreach ($data as $u) {
                 $status = "کارتابل";
                 if ($contract_type == 'factor') {
                     $project = $row['project'];
-                    $content = array("chat_id" => $chat_id, "text" => "نام : $name\nوضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                    $content = array("chat_id" => $u, "text" => "نام : $name\nوضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
                 } else {
-                    $content = array("chat_id" => $chat_id, "text" => "نام : $name\nوضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                    $content = array("chat_id" => $u, "text" => "نام : $name\nوضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
                 }
+                $bot->sendText($content);
                 sleep(2);
             }
             $contenttmp = array('chat_id' => $u,"text"=>"پایان پردازش.");
@@ -73,7 +75,6 @@ foreach ($data as $u) {
             $contenttmp = array('chat_id' => $u,"text"=>"موردی وجود ندارد.");
             $bot->sendText($contenttmp);
         }
-
     }
 }
 ?>
