@@ -1208,7 +1208,6 @@ switch ($callback_data) {
 //انتخاب نوع درخواست قراردادی
     case "contract":
         if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id==$admin) {
-            delete_undone_request($conn, $bb);
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn);
@@ -1222,7 +1221,6 @@ switch ($callback_data) {
 //انتخاب نوع درخواست فاکتوری
     case "factor":
         if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id==$admin) {
-            delete_undone_request($conn, $bb);
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn);

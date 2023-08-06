@@ -62,9 +62,9 @@ foreach ($data as $u) {
                 $status = "کارتابل";
                 if ($contract_type == 'factor') {
                     $project = $row['project'];
-                    $content = array("chat_id" => $u, "text" => "نام : $name\nوضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                    $content = array("chat_id" => $u, "text" => "نام : $name\nوضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
                 } else {
-                    $content = array("chat_id" => $u, "text" => "نام : $name\nوضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                    $content = array("chat_id" => $u, "text" => "نام : $name\nوضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
                 }
                 $bot->sendText($content);
                 sleep(2);
