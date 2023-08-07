@@ -440,7 +440,7 @@ function create_new_req($conn, $bot, $bb, $chat_id)
 {
     $qu = "INSERT INTO Requests (is_closed, req_status, created_by)
       VALUES (2, 'gettype',$bb)";
-    $result = $conn->query($qu);
+    $conn->query($qu);
     $inlineKeyboardoption = [
         $bot->buildInlineKeyBoardButton("قراردادی", '', "contract"),
         $bot->buildInlineKeyBoardButton("فاکتوری", '', "factor"),
@@ -565,7 +565,8 @@ function req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi)
     }
 }
 
-function my_req($conn, $bot, $chat_id, $bb){
+function my_req($conn, $bot, $chat_id, $bb)
+{
     $q_exists = "SELECT * FROM Requests WHERE (created_by = $bb AND is_closed = 0) OR (created_by = $bb AND is_closed = 1)";
     if ($result = $conn->query($q_exists)) {
         if ($result->num_rows == 0) {
@@ -680,6 +681,118 @@ function my_req($conn, $bot, $chat_id, $bb){
                     }
                 }
                 sleep(2);
+            }
+        }
+    }
+}
+
+function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id)
+{
+    $sql = "SELECT * FROM Requests WHERE req_status='getnum' AND created_by=$bb";
+    if ($result = $conn->query($sql)) {
+        if ($result->num_rows != 0) {
+            $thenum = $Text_orgi;
+
+            if (is_numeric($thenum)) {
+                settype($thenum, "integer");
+
+                $q_exists = "SELECT * FROM Requests WHERE is_closed=1 OR is_closed=0 ORDER BY date_registered DESC, time_registered DESC LIMIT $thenum";
+                if ($result = $conn->query($q_exists)) {
+                    if ($result->num_rows == 0) {
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "موردی وجود ندارد.");
+                        $bot->sendText($contenttmp);
+                    } else {
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "در حال پردازش $thenum درخواست...");
+                        $bot->sendText($contenttmp);
+                        while ($row = $result->fetch_assoc()) {
+
+                            $title = $row['title'];
+                            $price = $row['price'];
+                            $contract_type = $row['contract_type'];
+                            $description = $row['description'];
+                            $reason = $row['reason'];
+
+                            $date = $row['date_registered'];
+                            $time = $row['time_registered'];
+
+                            $date_cartable = $row['date_cartable'];
+                            $time_cartable = $row['time_cartable'];
+
+                            $date_reject = $row['date_reject'];
+                            $time_reject = $row['time_reject'];
+
+                            $date_paid = $row['date_paid'];
+                            $time_paid = $row['time_paid'];
+
+                            $state = $row['req_status'];
+                            if ($state == "waitacc") {
+                                $status = "در انتظار بررسی واحد مالی";
+                                $cartable = "-";
+                                $paid = "-";
+                            } elseif ($state == "cartable") {
+                                $status = "کارتابل";
+                            } elseif ($state == "rejectacc") {
+                                $status = "رد شده توسط واحد مالی";
+                                $cartable = "-";
+                                $paid = "-";
+                            } elseif ($state == "paid") {
+                                $status = "پرداخت شده";
+                            } else {
+                                $content = array("chat_id" => $chat_id, "text" => "اشتباهی رخ داد!");
+                                $bot->sendText($content);
+                            }
+                            if ($state == "rejectacc") {
+                                if ($contract_type == 'factor') {
+                                    $project = $row['project'];
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
+                                } else {
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
+                                }
+                                $bot->sendText($content);
+                            } elseif ($state == "cartable") {
+                                if ($contract_type == 'factor') {
+                                    $project = $row['project'];
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                                } else {
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
+                                }
+                                $bot->sendText($content);
+                            } elseif ($state == "waitacc") {
+                                if ($contract_type == 'factor') {
+                                    $project = $row['project'];
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time");
+                                } else {
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time");
+                                }
+                                $bot->sendText($content);
+                            } elseif ($state == "paid") {
+                                if ($date_cartable == "") {
+                                    $date_cartable = "ثبت نشده";
+                                }
+                                if ($time_cartable == "") {
+                                    $time_cartable = "ثبت نشده";
+                                }
+                                if ($contract_type == 'factor') {
+                                    $project = $row['project'];
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable\nتاریخ تغییر وضعیت به پرداخت شده : $date_paid\nساعت تغییر وضعیت به پرداخت شده : $time_paid");
+                                } else {
+                                    $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable\nتاریخ تغییر وضعیت به پرداخت شده : $date_paid\nساعت تغییر وضعیت به پرداخت شده : $time_paid");
+                                }
+                                $bot->sendText($content);
+                            }
+
+                            sleep(3);
+                        }
+                        $content = array("chat_id" => $chat_id, "text" => "پایان پردازش");
+                        $bot->sendText($content);
+                    }
+                }
+                delete_get_num($conn, $bb);
+//                $d_q = "DELETE FROM Requests WHERE req_status='getnum' AND created_by=$bb ";
+//                $conn->query($d_q);
+            } else {
+                $contenttmp = array('chat_id' => $chat_id, "text" => "لطفا عدد وارد کنید:");
+                $bot->sendText($contenttmp);
             }
         }
     }
@@ -876,7 +989,7 @@ if (in_array($chat_id, $ceoceo)) {
 // ------------------------------------------------------------ Callback for reject or accept request ------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // بررسی پیغام برای رد درخواست
-if (in_array($chat_id, $accc) or $chat_id==$admin) {
+if (in_array($chat_id, $accc) or $chat_id == $admin) {
     if ($Text_orgi != "/start") {
 
         $query_for_reject_message = "SELECT * FROM Requests WHERE (req_status='waitacc' OR req_status='cartable' OR req_status='paid') AND reason='setreasonforreject'";
@@ -950,9 +1063,11 @@ if ($chat_id == $admin) {
     if ($Text_orgi == "/start") {
         delete_half_made_user($conn);
         stop_changing($conn);
+        delete_get_num($conn, $bb);
         admin_clipboard($bot, $chat_id);
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
+        manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id);
 
         $q_id = "SELECT * FROM Persons WHERE status='getname' OR status='getuser' OR status='change' OR status='changeus' OR status='changeuss'";
         if ($result = $conn->query($q_id)) {
@@ -1082,7 +1197,6 @@ if ($chat_id == $admin) {
 }
 
 
-
 // برای حسابداری
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------
 //اگر start فراخوانی شود، وضعیت درخواست ها و کاربر ها مثل قبل میشود و عملیات کنسل می شود
@@ -1094,75 +1208,7 @@ if (in_array($chat_id, $accc)) {
         accounting_clipboard($bot, $chat_id);
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
-//                elseif ($ccc == "getnum") {
-//
-//                    $sql = "SELECT * FROM Requests WHERE req_status='getnum' AND created_by=$bb";
-//                    if ($result = $conn->query($sql)) {
-//                        if ($result->num_rows != 0) {
-//                            $thenum = $Text_orgi;
-//
-//                            if (is_numeric($thenum)) {
-//                                settype($thenum, "integer");
-//
-//                                $q_exists = "SELECT * FROM Requests WHERE req_status='waitacc' AND is_closed=0 ORDER BY date_registered DESC LIMIT $thenum";
-//                                if ($result = $conn->query($q_exists)) {
-//                                    if ($result->num_rows == 0) {
-//                                        $contenttmp = array('chat_id' => $chat_id, "text" => "موردی وجود ندارد.");
-//                                        $bot->sendText($contenttmp);
-//                                    } else {
-//                                        $num = $result->num_rows;
-//                                        $contenttmp = array('chat_id' => $chat_id, "text" => "در حال پردازش...");
-//                                        $bot->sendText($contenttmp);
-//
-//                                        while ($row = $result->fetch_assoc()) {
-//                                            $title = $row['title'];
-//                                            $price = $row['price'];
-//                                            $date = $row['date_registered'];
-//                                            $time = $row['time_registered'];
-//                                            $description = $row['description'];
-//                                            $created_by = $row['created_by'];
-//                                            $name = $row['name'];
-//                                            $id = $row['id'];
-//                                            $contract_type = $row['contract_type'];
-//                                            $cbdatareject = "y$id";
-//                                            $cbdataaccept = "x$id";
-//                                            $rejectreq = "r$id";
-//                                            if ($contract_type == 'factor') {
-//                                                $project = $row['project'];
-//                                                $inlineKeyboardoption = [
-//                                                    $bot->buildInlineKeyBoardButton("عدم تأیید", '', "$rejectreq"),
-//                                                    $bot->buildInlineKeyBoardButton("کارتابل", '', "$cbdatareject"),
-//                                                    $bot->buildInlineKeyBoardButton("پرداخت شده", '', "$cbdataaccept"),
-//                                                ];
-//                                                $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-//                                                $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ درخواست : $date\nساعت درخواست : $time", 'reply_markup' => $Keyboard);
-//                                                $bot->sendText($content);
-//                                            } else {
-//                                                $inlineKeyboardoption = [
-//                                                    $bot->buildInlineKeyBoardButton("عدم تأیید", '', "$rejectreq"),
-//                                                    $bot->buildInlineKeyBoardButton("کارتابل", '', "$cbdatareject"),
-//                                                    $bot->buildInlineKeyBoardButton("پرداخت شده", '', "$cbdataaccept"),
-//                                                ];
-//                                                $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-//                                                $content = array("chat_id" => $chat_id, "text" => "نام : $name\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ درخواست : $date\nساعت درخواست : $time", 'reply_markup' => $Keyboard);
-//                                                $bot->sendText($content);
-//                                            }
-//                                            sleep(1);
-//                                        }
-//                                        $contenttmp = array('chat_id' => $chat_id, "text" => "پایان پردازش");
-//                                        $bot->sendText($contenttmp);
-//                                    }
-//                                }
-//
-//                                $d_q = "DELETE FROM Requests WHERE req_status='getnum' AND created_by=$bb ";
-//                                $result = $conn->query($d_q);
-//                            } else {
-//                                $contenttmp = array('chat_id' => $chat_id, "text" => "لطفا عدد وارد کنید:");
-//                                $bot->sendText($contenttmp);
-//                            }
-//                        }
-//                    }
-//                }
+        manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id);
     }
 }
 
@@ -1185,13 +1231,12 @@ switch ($callback_data) {
     case "paymentreq":
         if (in_array($chat_id, $project_managers)) {
             delete_undone_request($conn, $bb);
-
             create_new_req($conn, $bot, $bb, $chat_id);
         }
         break;
 //  درخواست های من
     case "myreq":
-        if (in_array($chat_id, $project_managers) or $chat_id==$admin) {
+        if (in_array($chat_id, $project_managers) or $chat_id == $admin) {
             delete_undone_request($conn, $bb);
             delete_half_made_user($conn);
             stop_changing($conn);
@@ -1200,14 +1245,14 @@ switch ($callback_data) {
             if (in_array($chat_id, $project_managers)) {
                 projectmanager_clipboard($bot, $chat_id);
             }
-            if ($chat_id==$admin){
+            if ($chat_id == $admin) {
                 admin_clipboard($bot, $chat_id);
             }
         }
         break;
 //انتخاب نوع درخواست قراردادی
     case "contract":
-        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id==$admin) {
+        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn);
@@ -1220,7 +1265,7 @@ switch ($callback_data) {
         break;
 //انتخاب نوع درخواست فاکتوری
     case "factor":
-        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id==$admin) {
+        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn);
@@ -1233,7 +1278,7 @@ switch ($callback_data) {
         break;
 //تأیید درخواست پرداخت
     case "conf_pm":
-        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id==$admin) {
+        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
             $q_id = "SELECT * FROM Persons WHERE unique_id=$user_id";
             if ($result = $conn->query($q_id)) {
                 $row = $result->fetch_assoc();
@@ -1321,14 +1366,14 @@ switch ($callback_data) {
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
                 $bot->sendText($contenttmp);
-            } elseif ($chat_id==$admin){
+            } elseif ($chat_id == $admin) {
                 admin_clipboard($conn, $chat_id);
             }
         }
         break;
 //لغو درخواست پرداخت
     case "cancle_pm":
-        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id==$admin) {
+        if (in_array($chat_id, $project_managers) || in_array($chat_id, $accc) || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
             $q_exists = "SELECT id FROM Requests WHERE created_by=$bb AND is_closed=2";
             if ($result = $conn->query($q_exists)) {
                 $row = $result->fetch_assoc();
@@ -1343,7 +1388,7 @@ switch ($callback_data) {
                             projectmanager_clipboard($bot, $chat_id);
                         } elseif (in_array($chat_id, $accc)) {
                             accounting_clipboard($bot, $chat_id);
-                        } elseif ($chat_id==$admin) {
+                        } elseif ($chat_id == $admin) {
                             admin_clipboard($bot, $chat_id);
                         } elseif (in_array($chat_id, $ceoceo)) {
                             $inlineKeyboardoption = [
@@ -1373,7 +1418,7 @@ switch ($callback_data) {
         delete_half_made_user($conn);
         stop_changing($conn);
         stop_reason_message($conn);
-        if (in_array($chat_id, $accc) or $chat_id==$admin) {
+        if (in_array($chat_id, $accc) or $chat_id == $admin) {
             $inlineKeyboardoption = [
                 $bot->buildInlineKeyBoardButton("درخواست های باز حسابداری", '', "openreqaccc"),
                 $bot->buildInlineKeyBoardButton("آماده پرداخت", '', "payready"),
@@ -1385,7 +1430,7 @@ switch ($callback_data) {
         break;
     //نمایش درخواست های باز حسابداری
     case "openreqaccc":
-        if (in_array($chat_id, $accc) or $chat_id==$admin) {
+        if (in_array($chat_id, $accc) or $chat_id == $admin) {
             delete_undone_request($conn, $bb);
             delete_half_made_user($conn);
             stop_changing($conn);
@@ -1447,7 +1492,7 @@ switch ($callback_data) {
         break;
 //نمایش درخواست های آماده پرداخت
     case "payready":
-        if (in_array($chat_id, $accc) or $chat_id==$admin) {
+        if (in_array($chat_id, $accc) or $chat_id == $admin) {
             delete_undone_request($conn, $bb);
             delete_half_made_user($conn);
             stop_changing($conn);
@@ -1499,103 +1544,16 @@ switch ($callback_data) {
         break;
 //نمایش تمام درخواست ها
     case "everything":
-        if (in_array($chat_id, $accc) or $chat_id==$admin) {
+        if (in_array($chat_id, $accc) or $chat_id == $admin) {
             delete_undone_request($conn, $bb);
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn);
-            $q_exists = "SELECT * FROM Requests WHERE is_closed=1 OR is_closed=0 ORDER BY date_registered DESC, time_registered DESC LIMIT 1000";
-            if ($result = $conn->query($q_exists)) {
-                if ($result->num_rows == 0) {
-                    $contenttmp = array('chat_id' => $chat_id, "text" => "موردی وجود ندارد.");
-                    $bot->sendText($contenttmp);
-                } else {
-                    $num = $result->num_rows;
-                    $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد درخواست ها : $num");
-                    $bot->sendText($contenttmp);
-                    while ($row = $result->fetch_assoc()) {
-
-                        $title = $row['title'];
-                        $price = $row['price'];
-                        $contract_type = $row['contract_type'];
-                        $description = $row['description'];
-                        $reason = $row['reason'];
-
-                        $date = $row['date_registered'];
-                        $time = $row['time_registered'];
-
-                        $date_cartable = $row['date_cartable'];
-                        $time_cartable = $row['time_cartable'];
-
-                        $date_reject = $row['date_reject'];
-                        $time_reject = $row['time_reject'];
-
-                        $date_paid = $row['date_paid'];
-                        $time_paid = $row['time_paid'];
-
-                        $state = $row['req_status'];
-                        if ($state == "waitacc") {
-                            $status = "در انتظار بررسی واحد مالی";
-                            $cartable = "-";
-                            $paid = "-";
-                        } elseif ($state == "cartable") {
-                            $status = "کارتابل";
-                        } elseif ($state == "rejectacc") {
-                            $status = "رد شده توسط واحد مالی";
-                            $cartable = "-";
-                            $paid = "-";
-                        } elseif ($state == "paid") {
-                            $status = "پرداخت شده";
-                        } else {
-                            $content = array("chat_id" => $chat_id, "text" => "اشتباهی رخ داد!");
-                            $bot->sendText($content);
-                        }
-                        if ($state == "rejectacc") {
-                            if ($contract_type == 'factor') {
-                                $project = $row['project'];
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
-                            } else {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
-                            }
-                            $bot->sendText($content);
-                        } elseif ($state == "cartable") {
-                            if ($contract_type == 'factor') {
-                                $project = $row['project'];
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
-                            } else {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable");
-                            }
-                            $bot->sendText($content);
-                        } elseif ($state == "waitacc") {
-                            if ($contract_type == 'factor') {
-                                $project = $row['project'];
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time");
-                            } else {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time");
-                            }
-                            $bot->sendText($content);
-                        } elseif ($state == "paid") {
-                            if ($date_cartable == "") {
-                                $date_cartable = "ثبت نشده";
-                            }
-                            if ($time_cartable == "") {
-                                $time_cartable = "ثبت نشده";
-                            }
-                            if ($contract_type == 'factor') {
-                                $project = $row['project'];
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nعنوان : $title\nتوضیحات : $description\nپروژه : $project\nمبلغ : $price ریال\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable\nتاریخ تغییر وضعیت به پرداخت شده : $date_paid\nساعت تغییر وضعیت به پرداخت شده : $time_paid");
-                            } else {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nشماره قرارداد : $title\nمبلغ : $price ریال\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nتاریخ تغییر وضعیت به کارتابل : $date_cartable\nساعت تغییر وضعیت به کارتابل : $time_cartable\nتاریخ تغییر وضعیت به پرداخت شده : $date_paid\nساعت تغییر وضعیت به پرداخت شده : $time_paid");
-                            }
-                            $bot->sendText($content);
-                        }
-
-                        sleep(3);
-                    }
-                    $content = array("chat_id" => $chat_id, "text" => "پایان پردازش");
-                    $bot->sendText($content);
-                }
-            }
+            $qu = "INSERT INTO Requests (req_status, created_by)
+      VALUES ('getnum',$bb)";
+            $conn->query($qu);
+            $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد درخواست هایی که میخواهید نمایش داده شود را به صورت عدد وارد کنید:(کیبورد خود را به انگلیسی تغییر دهید)");
+            $bot->sendText($contenttmp);
         }
         break;
 //مدیریت حساب ها(تنظیمات)
